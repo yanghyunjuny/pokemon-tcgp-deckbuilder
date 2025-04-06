@@ -119,8 +119,12 @@ class Scraper:
         card_dict["artist"] = soup.find("div", class_="card-text-section card-text-artist").select('a')[0].string.strip()
 
         # rarity
-        card_rarity =soup.find("div", class_="prints-current-details").find_all("span")[1].text.strip().split("·")[1].strip()
-        card_dict["rarity"] = card_rarity
+        try:
+            card_rarity = soup.find("div", class_="prints-current-details").find_all("span")[1].text.strip().split("·")[1].strip()
+            if not re.search(r'[a-zA-Z]', card_rarity):
+                card_dict["rarity"] = card_rarity
+        except:
+            pass
 
         # other versions
         _other_versions = soup.find("table", class_="card-prints-versions").find_all("tr")[1:]
@@ -147,7 +151,7 @@ class Scraper:
 
         set_total_cards = int(self.card_sets[set_code]["total_cards"])
         for card_no in tqdm(range(1, set_total_cards+1), desc=f"Scraping cards for set {set_code}"):
-            card_dict = self.scrape_card(set_code, card_no)
+            self.scrape_card(set_code, card_no)
         
     def scrape_all_cards(self):
         if not self.card_sets:
@@ -156,12 +160,14 @@ class Scraper:
         for set_code in tqdm(self.card_sets, desc="Scraping all cards"):
             self.scrape_all_cards_for_card_set(set_code)
         
-if __name__ == "__main__":
+def main():
     scraper = Scraper()
     scraper.scrape_all_cards()
     with open("card_dict_list.json", "w") as f:
         json.dump(scraper.card_dict_list, f)
     with open("card_sets.json", "w") as f:
         json.dump(scraper.card_sets, f)
-    
+
+if __name__ == "__main__":
+    main()
     print("Scraping complete")
